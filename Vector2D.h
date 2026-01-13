@@ -16,70 +16,70 @@ struct Segment {
 };
 
 //ベクター+ベクター
-Vector2D operator+ (const Vector2D & v1, const Vector2D & v2)
+inline Vector2D operator+ (const Vector2D & v1, const Vector2D & v2)
 {
 	return Vector2D(v1.x + v2.x, v1.y + v2.y);
 }
 
 //ベクター-ベクター
-Vector2D operator- (const Vector2D& v1, const Vector2D& v2)
+inline Vector2D operator- (const Vector2D& v1, const Vector2D& v2)
 {
 	return Vector2D(v1.x - v2.x, v1.y - v2.y);
 }
 
 //ベクター*スカラー(float)
-Vector2D operator* (const Vector2D &v, float scalar)
+inline Vector2D operator* (const Vector2D &v, float scalar)
 {
 	return Vector2D(v.x * scalar, v.y * scalar);
 }
 //ベクター*スカラー(double)
-Vector2D operator* (const Vector2D& v, double scalar)
+inline Vector2D operator* (const Vector2D& v, double scalar)
 {
 	return Vector2D(v.x * scalar, v.y * scalar);
 }
 //スカラー(float)*ベクター
-Vector2D operator* (float scalar , const Vector2D& v)
+inline Vector2D operator* (float scalar , const Vector2D& v)
 {
 	return Vector2D(v.x * scalar, v.y * scalar);
 }
 //スカラー(double)*ベクター
-Vector2D operator* (double scalar, const Vector2D& v)
+inline Vector2D operator* (double scalar, const Vector2D& v)
 {
 	return Vector2D(v.x * scalar, v.y * scalar);
 }
 
 //2Dベクトルの外積
-inline float Vector2Cross(const Vector2D* v1, const Vector2D* v2)
+inline double Vector2Cross(const Vector2D* v1, const Vector2D* v2)
 {
-	return (float)v1->x * v2->y - v1->y * v2->x;
+	return v1->x * v2->y - v1->y * v2->x;
 }
 
 //2Dベクトルの内積
-inline float Vector2Dot(const Vector2D& v1, const Vector2D& v2)
+inline double Vector2Dot(const Vector2D& v1, const Vector2D& v2)
 {
-	return (float)v1.x * v2.x + v1.y * v2.y;
+	return v1.x * v2.x + v1.y * v2.y;
 }
 
-bool ColSegments(Segment& seg1, Segment& seg2, float* outT1 = 0, float* outT2 = 0, Vector2D* outPos = 0)
+inline bool ColSegments(Segment& seg1, Segment& seg2, double* outT1 = 0, double* outT2 = 0, Vector2D* outPos = 0)
 {
 	Vector2D w = seg2.s - seg1.s;
-	float Crs_v1_v2 = Vector2Cross(&seg1.v, &seg2.v);
+	double Crs_v1_v2 = Vector2Cross(&seg1.v, &seg2.v);
 	if (Crs_v1_v2 == 0.0F) {
 		return false;
 	}
 
-	float Crs_v_v1 = Vector2Cross(&w, &seg1.v);
-	float Crs_v_v2 = Vector2Cross(&w, &seg2.v);
+	double Crs_v_v1 = Vector2Cross(&w, &seg1.v);
+	double Crs_v_v2 = Vector2Cross(&w, &seg2.v);
 
-	float t1 = Crs_v_v2 / Crs_v1_v2;
-	float t2 = Crs_v_v1 / Crs_v1_v2;
+	double t1 = Crs_v_v2 / Crs_v1_v2;
+	double t2 = Crs_v_v1 / Crs_v1_v2;
 
 	if (outT1)
 		*outT1 = t1;
 	if (outT2)
 		*outT2 = t2;
 
-	const float eps = 0.00001f;
+	const double eps = 0.00001f;
 	if (t1 >= -eps && t1 <= 1.0f + eps && t2 >= -eps && t2 <= 1.0f + eps)
 	{
 		if (outPos)
@@ -91,19 +91,45 @@ bool ColSegments(Segment& seg1, Segment& seg2, float* outT1 = 0, float* outT2 = 
 	return false;
 }
 
-bool Line_vs_Box(Segment& line, Vector2D& box, double size, float* outT = 0, Vector2D* outPos = 0)
+inline bool Line_vs_Box(Segment& line, Vector2D& box, double size, double* outT = 0, Vector2D* outPos = 0)
 {
 	//矩形の4点の位置をベクトル表現
 	Vector2D P_top_left = box;
-	Vector2D P_top_right = Vector2D(box.x + size, box.y);
-	Vector2D P_bottom_right = Vector2D(box.x + size, box.y + size);
-	Vector2D P_bottom_left = Vector2D(box.x, box.y + size);
+	Vector2D P_top_right = { box.x + size, box.y };
+	Vector2D P_bottom_right = { box.x + size, box.y + size };
+	Vector2D P_bottom_left = { box.x, box.y + size };
 	
 	//矩形の4辺をセグメント表現
-	Segment box_top = { P_top_left, P_top_right };
-	Segment box_right = {P_top_right, P_bottom_right};
-	Segment box_bottom = { P_bottom_right, P_bottom_left };
-	Segment box_left = { P_bottom_left, P_top_left };
+	Segment box_top = { P_top_left, P_top_right - P_top_left };
+	Segment box_right = {P_top_right, P_bottom_right - P_top_right};
+	Segment box_bottom = { P_bottom_right, P_bottom_left - P_bottom_right };
+	Segment box_left = { P_bottom_left, P_top_left - P_bottom_left };
+
+	//線分と矩形の各辺との当たり判定
+	if (ColSegments(line, box_top, outT, nullptr, outPos) ||
+		ColSegments(line, box_right, outT, nullptr, outPos) ||
+		ColSegments(line, box_bottom, outT, nullptr, outPos) ||
+		ColSegments(line, box_left, outT, nullptr, outPos))
+	{
+		return true;
+	}
+
+	return false;
+}
+
+inline bool Line_vs_Circle(Segment& line, Vector2D& circle, double size, double* outT = 0, Vector2D* outPos = 0)
+{
+	//矩形の4点の位置をベクトル表現
+	Vector2D P_left = { circle.x - size, circle.y };
+	Vector2D P_right = { circle.x + size, circle.y };
+	Vector2D P_top = { circle.x, circle.y - size };
+	Vector2D P_bottom = { circle.x, circle.y + size };
+
+	//矩形の4辺をセグメント表現
+	Segment box_top = { circle, P_top - circle };
+	Segment box_right = { circle, P_right - circle };
+	Segment box_bottom = { circle, P_bottom - circle };
+	Segment box_left = { circle, P_left - circle };
 
 	//線分と矩形の各辺との当たり判定
 	if (ColSegments(line, box_top, outT, nullptr, outPos) ||
