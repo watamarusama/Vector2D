@@ -142,3 +142,41 @@ inline bool Line_vs_Circle(Segment& line, Vector2D& circle, double size, double*
 
 	return false;
 }
+
+inline bool Box_vs_Box(Vector2D& box1, double size1, Vector2D& box2, double size2)
+{
+	if (box1.x + size1 < box2.x) return false; //box1がbox2の左側
+	if (box2.x + size2 < box1.x) return false; //box1がbox2の右側
+	if (box1.y + size1 < box2.y) return false; //box1がbox2の上側
+	if (box2.y + size2 < box1.y) return false; //box1がbox2の下側
+	return true;
+}
+
+inline bool Circle_vs_Circle(Vector2D& circle1, double size1, Vector2D& circle2, double size2)
+{
+	double distX = circle1.x - circle2.x;
+	double distY = circle1.y - circle2.y;
+	double radiiSum = size1 + size2;
+	return (distX * distX + distY * distY) <= (radiiSum * radiiSum);
+}
+
+inline bool Box_vs_Circle(Vector2D& box, double boxSize, Vector2D& circle, double circleSize)
+{
+	//矩形の中心点を求める
+	Vector2D boxCenter = { box.x + boxSize / 2.0, box.y + boxSize / 2.0 };
+	//矩形の中心点と円の中心点の距離を求める
+	double distX = std::abs(circle.x - boxCenter.x);
+	double distY = std::abs(circle.y - boxCenter.y);
+	//矩形の半分のサイズ
+	double halfBoxSize = boxSize / 2.0;
+	//距離が矩形の半分のサイズを超えている場合、衝突していない
+	if (distX > (halfBoxSize + circleSize)) return false;
+	if (distY > (halfBoxSize + circleSize)) return false;
+	//距離が矩形の半分のサイズ以内の場合、衝突している
+	if (distX <= halfBoxSize) return true;
+	if (distY <= halfBoxSize) return true;
+	//コーナー部分での衝突判定
+	double cornerDistSq = (distX - halfBoxSize) * (distX - halfBoxSize) +
+		(distY - halfBoxSize) * (distY - halfBoxSize);
+	return cornerDistSq <= (circleSize * circleSize);
+}
