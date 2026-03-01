@@ -91,6 +91,7 @@ inline bool ColSegments(Segment& seg1, Segment& seg2, double* outT1 = 0, double*
 	return false;
 }
 
+//ラインとボックス
 inline bool Line_vs_Box(Segment& line, Vector2D& box, double size, double* outT = 0, Vector2D* outPos = 0)
 {
 	//矩形の4点の位置をベクトル表現
