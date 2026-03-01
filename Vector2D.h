@@ -117,6 +117,7 @@ inline bool Line_vs_Box(Segment& line, Vector2D& box, double size, double* outT 
 	return false;
 }
 
+//線分と円形
 inline bool Line_vs_Circle(Segment& line, Vector2D& circle, double size, double* outT = 0, Vector2D* outPos = 0)
 {
 	//矩形の4点の位置をベクトル表現
@@ -143,6 +144,7 @@ inline bool Line_vs_Circle(Segment& line, Vector2D& circle, double size, double*
 	return false;
 }
 
+//矩形と矩形
 inline bool Box_vs_Box(Vector2D& box1, double size1, Vector2D& box2, double size2)
 {
 	if (box1.x + size1 < box2.x) return false; //box1がbox2の左側
@@ -152,6 +154,7 @@ inline bool Box_vs_Box(Vector2D& box1, double size1, Vector2D& box2, double size
 	return true;
 }
 
+//円形と円形
 inline bool Circle_vs_Circle(Vector2D& circle1, double size1, Vector2D& circle2, double size2)
 {
 	double distX = circle1.x - circle2.x;
@@ -160,7 +163,30 @@ inline bool Circle_vs_Circle(Vector2D& circle1, double size1, Vector2D& circle2,
 	return (distX * distX + distY * distY) <= (radiiSum * radiiSum);
 }
 
+//矩形と円形
 inline bool Box_vs_Circle(Vector2D& box, double boxSize, Vector2D& circle, double circleSize)
+{
+	//矩形の中心点を求める
+	Vector2D boxCenter = { box.x + boxSize / 2.0, box.y + boxSize / 2.0 };
+	//矩形の中心点と円の中心点の距離を求める
+	double distX = std::abs(circle.x - boxCenter.x);
+	double distY = std::abs(circle.y - boxCenter.y);
+	//矩形の半分のサイズ
+	double halfBoxSize = boxSize / 2.0;
+	//距離が矩形の半分のサイズを超えている場合、衝突していない
+	if (distX > (halfBoxSize + circleSize)) return false;
+	if (distY > (halfBoxSize + circleSize)) return false;
+	//距離が矩形の半分のサイズ以内の場合、衝突している
+	if (distX <= halfBoxSize) return true;
+	if (distY <= halfBoxSize) return true;
+	//コーナー部分での衝突判定
+	double cornerDistSq = (distX - halfBoxSize) * (distX - halfBoxSize) +
+		(distY - halfBoxSize) * (distY - halfBoxSize);
+	return cornerDistSq <= (circleSize * circleSize);
+}
+
+//円形と矩形
+inline bool Circle_vs_Box(Vector2D& circle, double circleSize, Vector2D& box, double boxSize)
 {
 	//矩形の中心点を求める
 	Vector2D boxCenter = { box.x + boxSize / 2.0, box.y + boxSize / 2.0 };
